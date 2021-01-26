@@ -1,0 +1,56 @@
+package gen;
+
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class Lexer {
+    private String data;
+    private final Map<Pattern, Leaf> map;
+
+    public Lexer(String data) {
+        this.data = data.replaceAll("[ \n\t]", "");
+        map = new LinkedHashMap<>();
+        map.put(Pattern.compile("([0-9]+).*"), Leaf.NUMBER);
+map.put(Pattern.compile("(\\+).*"), Leaf.PLUS);
+map.put(Pattern.compile("(-).*"), Leaf.MINUS);
+map.put(Pattern.compile("(\\*).*"), Leaf.MULT);
+map.put(Pattern.compile("(/).*"), Leaf.DIV);
+map.put(Pattern.compile("(\\().*"), Leaf.LP);
+map.put(Pattern.compile("(\\)).*"), Leaf.RP);
+
+    }
+
+    public List<Token> parseAll() {
+        List<Token> tokens = new ArrayList<>();
+        while (true) {
+            Token current = getToken();
+            tokens.add(current);
+            if (current.leaf == Leaf.END) {
+                return tokens;
+            }
+        }
+    }
+
+    private Token getToken() {
+        if (data.isEmpty()) {
+            return new Token(Leaf.END);
+        }
+        for (Map.Entry<Pattern, Leaf> entry : map.entrySet()) {
+            Pattern pat = entry.getKey();
+            Leaf leaf = entry.getValue();
+            Matcher matcher = pat.matcher(data);
+            if (matcher.matches() && !matcher.group().isEmpty()) {
+                String result = matcher.group(1);
+                int len = result.length();
+                if (len < data.length()) {
+                    data = data.substring(len);
+                } else {
+                    data = "";
+                }
+                return new Token(leaf, result);
+            }
+        }
+        return new Token(Leaf.END);
+    }
+}
